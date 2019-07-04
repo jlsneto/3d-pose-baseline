@@ -17,7 +17,7 @@ import scipy as sp
 from pprint import pprint
 from scipy.interpolate import interp1d
 from scipy.interpolate import UnivariateSpline
-
+os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 FLAGS = tf.app.flags.FLAGS
 
 order = [15, 12, 25, 26, 27, 17, 18, 19, 1, 2, 3, 6, 7, 8]

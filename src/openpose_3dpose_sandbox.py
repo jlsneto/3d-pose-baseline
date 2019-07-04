@@ -53,7 +53,7 @@ def read_openpose_json(smooth=True, *args):
         if not os.path.isfile(_file): raise Exception("No file found!!, {0}".format(_file))
         data = json.load(open(_file))
         #take first person
-        _data = data["people"][0]["pose_keypoints"]
+        _data = data["people"][0]["pose_keypoints_2d"]
         xy = []
         if len(_data)>=53:
             #openpose incl. confidence score

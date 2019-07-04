@@ -385,9 +385,9 @@ def main(_):
             ax = plt.subplot(gs1[subplot_idx - 1], projection='3d')
             ax.view_init(18, -70)    
 
-            if FLAGS.cache_on_fail:
-                if np.min(poses3d) < -1000:
-                    poses3d = before_pose
+            # if FLAGS.cache_on_fail:
+            #     if np.min(poses3d) < -1000:
+            #         poses3d = before_pose
 
             p3d = poses3d
             to_export = poses3d.tolist()[0]
@@ -408,8 +408,8 @@ def main(_):
             if FLAGS.write_gif:
                 png_lib.append(imageio.imread(pngName))
 
-            if FLAGS.cache_on_fail:
-                before_pose = poses3d
+            # if FLAGS.cache_on_fail:
+            #     before_pose = poses3d
 
     if FLAGS.write_gif:
         if FLAGS.interpolation:

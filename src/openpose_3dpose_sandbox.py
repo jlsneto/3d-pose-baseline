@@ -17,7 +17,9 @@ import scipy as sp
 from pprint import pprint
 from scipy.interpolate import interp1d
 from scipy.interpolate import UnivariateSpline
-os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+os.chdir(BASE_DIR)
 FLAGS = tf.app.flags.FLAGS
 
 order = [15, 12, 25, 26, 27, 17, 18, 19, 1, 2, 3, 6, 7, 8]
@@ -25,14 +27,16 @@ order = [15, 12, 25, 26, 27, 17, 18, 19, 1, 2, 3, 6, 7, 8]
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 def show_anim_curves(anim_dict, _plt):
     val = np.array(list(anim_dict.values()))
-    for o in range(0,36,2):
-        x = val[:,o]
-        y = val[:,o+1]
+    for o in range(0, 36, 2):
+        x = val[:, o]
+        y = val[:, o + 1]
         _plt.plot(x, 'r--', linewidth=0.2)
         _plt.plot(y, 'g', linewidth=0.2)
     return _plt
+
 
 def read_openpose_json(smooth=True, *args):
     # openpose output format:
@@ -40,7 +44,7 @@ def read_openpose_json(smooth=True, *args):
     # ignore confidence score, take x and y [x1,y1,x2,y2,...]
 
     logger.info("start reading json files")
-    #load json files
+    # load json files
     json_files = os.listdir(openpose_output_dir)
     # check for other file types
     json_files = sorted([filename for filename in json_files if filename.endswith(".json")])
@@ -52,76 +56,76 @@ def read_openpose_json(smooth=True, *args):
         _file = os.path.join(openpose_output_dir, file_name)
         if not os.path.isfile(_file): raise Exception("No file found!!, {0}".format(_file))
         data = json.load(open(_file))
-        #take first person
+        # take first person
         _data = data["people"][0]["pose_keypoints_2d"]
         xy = []
-        if len(_data)>=53:
-            #openpose incl. confidence score
-            #ignore confidence score
-            for o in range(0,len(_data),3):
+        if len(_data) >= 53:
+            # openpose incl. confidence score
+            # ignore confidence score
+            for o in range(0, len(_data), 3):
                 xy.append(_data[o])
-                xy.append(_data[o+1])
+                xy.append(_data[o + 1])
         else:
-            #tf-pose-estimation
+            # tf-pose-estimation
             xy = _data
 
         # get frame index from openpose 12 padding
         frame_indx = re.findall("(\d+)", file_name)
         logger.debug("found {0} for frame {1}".format(xy, str(int(frame_indx[-1]))))
 
-        #body_25 support, convert body_25 output format to coco
-        if len(_data)>54:
-            _xy = xy[0:19*2]
+        # body_25 support, convert body_25 output format to coco
+        if len(_data) > 54:
+            _xy = xy[0:19 * 2]
             for x in range(len(xy)):
-                #del jnt 8
-                if x==8*2:
+                # del jnt 8
+                if x == 8 * 2:
                     del _xy[x]
-                if x==8*2+1:
+                if x == 8 * 2 + 1:
                     del _xy[x]
-                #map jnt 9 to 8
-                if x==9*2:
+                # map jnt 9 to 8
+                if x == 9 * 2:
                     _xy[16] = xy[x]
-                    _xy[17] = xy[x+1]
-                #map jnt 10 to 9
-                if x==10*2:
+                    _xy[17] = xy[x + 1]
+                # map jnt 10 to 9
+                if x == 10 * 2:
                     _xy[18] = xy[x]
-                    _xy[19] = xy[x+1]         
-                #map jnt 11 to 10
-                if x==11*2:
+                    _xy[19] = xy[x + 1]
+                    # map jnt 11 to 10
+                if x == 11 * 2:
                     _xy[20] = xy[x]
-                    _xy[21] = xy[x+1]
-                #map jnt 12 to 11
-                if x==12*2:
+                    _xy[21] = xy[x + 1]
+                # map jnt 12 to 11
+                if x == 12 * 2:
                     _xy[22] = xy[x]
-                    _xy[23] = xy[x+1]
-                #map jnt 13 to 12
-                if x==13*2:
+                    _xy[23] = xy[x + 1]
+                # map jnt 13 to 12
+                if x == 13 * 2:
                     _xy[24] = xy[x]
-                    _xy[25] = xy[x+1]         
-                #map jnt 14 to 13
-                if x==14*2:
+                    _xy[25] = xy[x + 1]
+                    # map jnt 14 to 13
+                if x == 14 * 2:
                     _xy[26] = xy[x]
-                    _xy[27] = xy[x+1]
-                #map jnt 15 to 14
-                if x==15*2:
+                    _xy[27] = xy[x + 1]
+                # map jnt 15 to 14
+                if x == 15 * 2:
                     _xy[28] = xy[x]
-                    _xy[29] = xy[x+1]
-                #map jnt 16 to 15
-                if x==16*2:
+                    _xy[29] = xy[x + 1]
+                # map jnt 16 to 15
+                if x == 16 * 2:
                     _xy[30] = xy[x]
-                    _xy[31] = xy[x+1]
-                #map jnt 17 to 16
-                if x==17*2:
+                    _xy[31] = xy[x + 1]
+                # map jnt 17 to 16
+                if x == 17 * 2:
                     _xy[32] = xy[x]
-                    _xy[33] = xy[x+1]
-                #map jnt 18 to 17
-                if x==18*2:
+                    _xy[33] = xy[x + 1]
+                # map jnt 18 to 17
+                if x == 18 * 2:
                     _xy[34] = xy[x]
-                    _xy[35] = xy[x+1]
-            #coco 
+                    _xy[35] = xy[x + 1]
+            # coco
             xy = _xy
 
-        #add xy to frame
+        # add xy to frame
         cache[int(frame_indx[-1])] = xy
 
     plt.figure(1)
@@ -156,45 +160,45 @@ def read_openpose_json(smooth=True, *args):
         forward, back = ([] for _ in range(2))
 
         # joints x,y array
-        _len = len(xy) # 36
+        _len = len(xy)  # 36
 
         # create array of parallel frames (-3<n>3)
-        for neighbor in range(1,4):
+        for neighbor in range(1, 4):
             # first n frames, get value of xy in postive lookahead frames(current frame + 3)
             if frame in head_frame_block:
-                forward += cache[frame+neighbor]
+                forward += cache[frame + neighbor]
             # last n frames, get value of xy in negative lookahead frames(current frame - 3)
             elif frame in tail_frame_block:
-                back += cache[frame-neighbor]
+                back += cache[frame - neighbor]
             else:
                 # between frames, get value of xy in bi-directional frames(current frame -+ 3)     
-                forward += cache[frame+neighbor]
-                back += cache[frame-neighbor]
+                forward += cache[frame + neighbor]
+                back += cache[frame - neighbor]
 
         # build frame range vector 
         frames_joint_median = [0 for i in range(_len)]
         # more info about mapping in src/data_utils.py
         # for each 18joints*x,y  (x1,y1,x2,y2,...)~36 
-        for x in range(0,_len,2):
+        for x in range(0, _len, 2):
             # set x and y
-            y = x+1
+            y = x + 1
             if frame in head_frame_block:
                 # get vector of n frames forward for x and y, incl. current frame
-                x_v = [xy[x], forward[x], forward[x+_len], forward[x+_len*2]]
-                y_v = [xy[y], forward[y], forward[y+_len], forward[y+_len*2]]
+                x_v = [xy[x], forward[x], forward[x + _len], forward[x + _len * 2]]
+                y_v = [xy[y], forward[y], forward[y + _len], forward[y + _len * 2]]
             elif frame in tail_frame_block:
                 # get vector of n frames back for x and y, incl. current frame
-                x_v =[xy[x], back[x], back[x+_len], back[x+_len*2]]
-                y_v =[xy[y], back[y], back[y+_len], back[y+_len*2]]
+                x_v = [xy[x], back[x], back[x + _len], back[x + _len * 2]]
+                y_v = [xy[y], back[y], back[y + _len], back[y + _len * 2]]
             else:
                 # get vector of n frames forward/back for x and y, incl. current frame
                 # median value calc: find neighbor frames joint value and sorted them, use numpy median module
                 # frame[x1,y1,[x2,y2],..]frame[x1,y1,[x2,y2],...], frame[x1,y1,[x2,y2],..]
                 #                 ^---------------------|-------------------------^
-                x_v =[xy[x], forward[x], forward[x+_len], forward[x+_len*2],
-                        back[x], back[x+_len], back[x+_len*2]]
-                y_v =[xy[y], forward[y], forward[y+_len], forward[y+_len*2],
-                        back[y], back[y+_len], back[y+_len*2]]
+                x_v = [xy[x], forward[x], forward[x + _len], forward[x + _len * 2],
+                       back[x], back[x + _len], back[x + _len * 2]]
+                y_v = [xy[y], forward[y], forward[y + _len], forward[y + _len * 2],
+                       back[y], back[y + _len], back[y + _len * 2]]
 
             # get median of vector
             x_med = np.median(sorted(x_v))
@@ -205,21 +209,20 @@ def read_openpose_json(smooth=True, *args):
                 # allow fix from first frame
                 if frame:
                     # get x from last frame
-                    x_med = smoothed[frame-1][x]
+                    x_med = smoothed[frame - 1][x]
             # if joint is hidden y
             if not y_med:
                 # allow fix from first frame
                 if frame:
                     # get y from last frame
-                    y_med = smoothed[frame-1][y]
+                    y_med = smoothed[frame - 1][y]
 
-            logger.debug("old X {0} sorted neighbor {1} new X {2}".format(xy[x],sorted(x_v), x_med))
-            logger.debug("old Y {0} sorted neighbor {1} new Y {2}".format(xy[y],sorted(y_v), y_med))
+            logger.debug("old X {0} sorted neighbor {1} new X {2}".format(xy[x], sorted(x_v), x_med))
+            logger.debug("old Y {0} sorted neighbor {1} new Y {2}".format(xy[y], sorted(y_v), y_med))
 
             # build new array of joint x and y value
-            frames_joint_median[x] = x_med 
-            frames_joint_median[x+1] = y_med 
-		
+            frames_joint_median[x] = x_med
+            frames_joint_median[x + 1] = y_med
 
         smoothed[frame] = frames_joint_median
 
@@ -227,61 +230,60 @@ def read_openpose_json(smooth=True, *args):
 
 
 def main(_):
-    
     smoothed = read_openpose_json()
     plt.figure(2)
     smooth_curves_plot = show_anim_curves(smoothed, plt)
-    #return
+    # return
     pngName = 'gif_output/smooth_plot.png'
     smooth_curves_plot.savefig(pngName)
     logger.info('writing gif_output/smooth_plot.png')
-    
+
     if FLAGS.interpolation:
         logger.info("start interpolation")
 
-        framerange = len( smoothed.keys() )
+        framerange = len(smoothed.keys())
         joint_rows = 36
         array = np.concatenate(list(smoothed.values()))
-        array_reshaped = np.reshape(array, (framerange, joint_rows) )
-    
+        array_reshaped = np.reshape(array, (framerange, joint_rows))
+
         multiplier = FLAGS.multiplier
-        multiplier_inv = 1/multiplier
+        multiplier_inv = 1 / multiplier
 
         out_array = np.array([])
         for row in range(joint_rows):
             x = []
             for frame in range(framerange):
-                x.append( array_reshaped[frame, row] )
-            
-            frame = range( framerange )
+                x.append(array_reshaped[frame, row])
+
+            frame = range(framerange)
             frame_resampled = np.arange(0, framerange, multiplier)
             spl = UnivariateSpline(frame, x, k=3)
-            #relative smooth factor based on jnt anim curve
+            # relative smooth factor based on jnt anim curve
             min_x, max_x = min(x), max(x)
             smooth_fac = max_x - min_x
             smooth_resamp = 125
             smooth_fac = smooth_fac * smooth_resamp
-            spl.set_smoothing_factor( float(smooth_fac) )
+            spl.set_smoothing_factor(float(smooth_fac))
             xnew = spl(frame_resampled)
-            
+
             out_array = np.append(out_array, xnew)
-    
+
         logger.info("done interpolating. reshaping {0} frames,  please wait!!".format(framerange))
-    
+
         a = np.array([])
-        for frame in range( int( framerange * multiplier_inv ) ):
+        for frame in range(int(framerange * multiplier_inv)):
             jnt_array = []
             for jnt in range(joint_rows):
-                jnt_array.append( out_array[ jnt * int(framerange * multiplier_inv) + frame] )
+                jnt_array.append(out_array[jnt * int(framerange * multiplier_inv) + frame])
             a = np.append(a, jnt_array)
-        
+
         a = np.reshape(a, (int(framerange * multiplier_inv), joint_rows))
         out_array = a
-    
+
         interpolate_smoothed = {}
-        for frame in range( int(framerange * multiplier_inv) ):
-            interpolate_smoothed[frame] = list( out_array[frame] )
-        
+        for frame in range(int(framerange * multiplier_inv)):
+            interpolate_smoothed[frame] = list(out_array[frame])
+
         plt.figure(3)
         smoothed = interpolate_smoothed
         interpolate_curves_plot = show_anim_curves(smoothed, plt)
@@ -307,7 +309,7 @@ def main(_):
     with tf.Session(config=tf.ConfigProto(
             device_count=device_count,
             allow_soft_placement=True)) as sess:
-        #plt.figure(3)
+        # plt.figure(3)
         batch_size = 128
         model = create_model(sess, actions, batch_size)
         iter_range = len(smoothed.keys())
@@ -319,12 +321,12 @@ def main(_):
             joints_array = np.zeros((1, 36))
             joints_array[0] = [0 for i in range(36)]
             for o in range(len(joints_array[0])):
-                #feed array with xy array
+                # feed array with xy array
                 joints_array[0][o] = xy[o]
 
-            twod_export_units[frame]={}
-            for abs_b, __n in enumerate(range(0, len(xy),2)):
-                twod_export_units[frame][abs_b] = {"translate": [xy[__n],xy[__n+1]]}
+            twod_export_units[frame] = {}
+            for abs_b, __n in enumerate(range(0, len(xy), 2)):
+                twod_export_units[frame][abs_b] = {"translate": [xy[__n], xy[__n + 1]]}
 
             _data = joints_array[0]
             # mapping all body parts or 3d-pose-baseline format
@@ -359,8 +361,8 @@ def main(_):
             gs1 = gridspec.GridSpec(1, 1)
             gs1.update(wspace=-0.00, hspace=0.05)  # set the spacing between axes.
             plt.axis('off')
-            all_poses_3d.append( poses3d )
-            enc_in, poses3d = map( np.vstack, [enc_in, all_poses_3d] )
+            all_poses_3d.append(poses3d)
+            enc_in, poses3d = map(np.vstack, [enc_in, all_poses_3d])
             subplot_idx, exidx = 1, 1
             _max = 0
             _min = 10000
@@ -383,7 +385,7 @@ def main(_):
 
             # Plot 3d predictions
             ax = plt.subplot(gs1[subplot_idx - 1], projection='3d')
-            ax.view_init(18, -70)    
+            ax.view_init(18, -70)
 
             # if FLAGS.cache_on_fail:
             #     if np.min(poses3d) < -1000:
@@ -391,19 +393,22 @@ def main(_):
 
             p3d = poses3d
             to_export = poses3d.tolist()[0]
-            x,y,z = [[] for _ in range(3)]
+            x, y, z = [[] for _ in range(3)]
             for o in range(0, len(to_export), 3):
                 x.append(to_export[o])
-                y.append(to_export[o+1])
-                z.append(to_export[o+2])
-            export_units[frame]={}
-            for jnt_index, (_x, _y, _z) in enumerate(zip(x,y,z)):
+                y.append(to_export[o + 1])
+                z.append(to_export[o + 2])
+            export_units[frame] = {}
+            for jnt_index, (_x, _y, _z) in enumerate(zip(x, y, z)):
                 export_units[frame][jnt_index] = {"translate": [_x, _y, _z]}
-
 
             viz.show3Dpose(p3d, ax, lcolor="#9b59b6", rcolor="#2ecc71")
 
             pngName = 'png/pose_frame_{0}.png'.format(str(frame).zfill(12))
+            dir_name = os.path.dirname(pngName)
+            if not os.path.exists(os.path.dirname(pngName)):
+                os.mkdir(os.path.join(BASE_DIR, dir_name))
+
             plt.savefig(pngName)
             if FLAGS.write_gif:
                 png_lib.append(imageio.imread(pngName))
@@ -413,8 +418,8 @@ def main(_):
 
     if FLAGS.write_gif:
         if FLAGS.interpolation:
-            #take every frame on gif_fps * multiplier_inv
-            png_lib = np.array([png_lib[png_image] for png_image in range(0,len(png_lib), int(multiplier_inv)) ])
+            # take every frame on gif_fps * multiplier_inv
+            png_lib = np.array([png_lib[png_image] for png_image in range(0, len(png_lib), int(multiplier_inv))])
         logger.info("creating Gif gif_output/animation.gif, please Wait!")
         imageio.mimsave('gif_output/animation.gif', png_lib, fps=FLAGS.gif_fps)
 
@@ -429,16 +434,15 @@ def main(_):
 
     logger.info("Done!".format(pngName))
 
-if __name__ == "__main__":
 
+if __name__ == "__main__":
     openpose_output_dir = FLAGS.pose_estimation_json
-    
-    level = {0:logging.ERROR,
-             1:logging.WARNING,
-             2:logging.INFO,
-             3:logging.DEBUG}
+
+    level = {0: logging.ERROR,
+             1: logging.WARNING,
+             2: logging.INFO,
+             3: logging.DEBUG}
 
     logger.setLevel(level[FLAGS.verbose])
-
 
     tf.app.run()
